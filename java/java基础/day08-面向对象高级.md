@@ -468,12 +468,12 @@ class Test$1 extends Animal {
           // 目标：完成给数组排序，理解其中匿名内部类的用法
           // 准备一个学生类型的数组，存放6个学生对象
           Student[] students = new Student[6];
-          students[0] = new Students("小明", 18, 1.75, "男");
-          students[1] = new Students("小红", 19, 1.60, "女");
-          students[2] = new Students("小刚", 20, 1.65, "男");
-          students[3] = new Students("小花", 18, 1.63, "女");
-          students[4] = new Students("小蕊", 28, 1.55, "女");
-          students[5] = new Students("小卡", 19, 1.65, "女");
+          students[0] = new Student("小明", 18, 1.75, "男");
+          students[1] = new Student("小红", 19, 1.60, "女");
+          students[2] = new Student("小刚", 20, 1.65, "男");
+          students[3] = new Student("小花", 18, 1.63, "女");
+          students[4] = new Student("小蕊", 28, 1.55, "女");
+          students[5] = new Student("小卡", 19, 1.65, "女");
   
           // 需求：按年龄升序排序，调用Sun公司写好的API
           Arrays.sort(students, new Comparator<Student>() {
@@ -1053,7 +1053,7 @@ public class ArrayListDemo1 {
 
   - …
 
-- 常见的布局管理器(Layout Manager)：决定组件在容器中的布局方式，避免了手动设置每个组件的位置和大小，从而简化了GUI设计过程（==见java工具文件夹==）
+- 常见的布局管理器(Layout Manager)：决定组件在容器中的布局方式，避免了手动设置每个组件的位置和大小，从而简化了GUI设计过程（==[见java工具文件夹](java工具\布局管理器简介.md)==）
   - FlowLayout
   - BorderLayout
   - GridLayout

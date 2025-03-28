@@ -333,7 +333,7 @@ package com.itheima.polymorphsm2;
 
 public class Test {
     public static void main(String[] args) {
-        // 1.右边对象是解耦合的，可以替换,例如换成Tortois()
+        // 1.右边对象是解耦合的，可以替换,例如换成Tortoise()
         Animal a1 = new Wolf();
         a1.run();
         
