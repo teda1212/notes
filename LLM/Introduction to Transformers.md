@@ -8,14 +8,14 @@
 
 ### 1.1 输入
 
-<img src="imgs/Introduction to Transformers/image-20241029211717919.png" alt="image-20241029211717919" style="zoom:80%;" />
+<img src="images/Introduction to Transformers/image-20241029211717919.png" alt="image-20241029211717919" style="zoom:80%;" />
 
 每一个输入为$D*N$维的矩阵（$N个维数为D的向量$），每一列为一个向量，每一行为一个$Feature$
 
 1. 一句话中每个词可以嵌入为一个向量
 2. 一张图片分解成一系列的$patches$，每一个$patch$可以嵌入为一个向量
 
-<img src="imgs/Introduction to Transformers/image-20241029215348169.png" alt="image-20241029215348169" style="zoom:80%;" />
+<img src="images/Introduction to Transformers/image-20241029215348169.png" alt="image-20241029215348169" style="zoom:80%;" />
 
 ### 1.2 输出
 
@@ -37,7 +37,7 @@ $$\begin{equation} X ^ { ( m ) } = t r a n s f o r m e r - b l o c k ( X ^ { ( m
 
 **Attention**
 
-<img src="imgs/Introduction to Transformers/image-20241029235122330.png" alt="image-20241029235122330" style="zoom: 50%;" />
+<img src="images/Introduction to Transformers/image-20241029235122330.png" alt="image-20241029235122330" style="zoom: 50%;" />
 
 如果想用前面的词来预测下一个词，那么$A^{(m)}$就为上三角矩阵，为了防止未来的词影响前面词的特征表示
 
@@ -77,7 +77,7 @@ $$ Y ^ { ( m ) } = M H S A _ { \theta } ( X ^ { ( m - 1 ) } ) = \sum _ { h = 1 }
 
 矩阵乘法示意图：
 
-<img src="imgs/Introduction to Transformers/image-20241030105236968.png" alt="image-20241030105236968" style="zoom:50%;" />
+<img src="images/Introduction to Transformers/image-20241030105236968.png" alt="image-20241030105236968" style="zoom:50%;" />
 
 其中，$$ \theta = \left\{ U _ { q , h } , U _ { k , h } , V _ { h } \right\} _ { h = 1 } ^ { H }$$为参数，通常$K=D/H$
 
@@ -103,8 +103,8 @@ $$ \tilde { x } _ { d , n } = \frac { 1 } { \sqrt { v a r ( x _ { n } ) } } \lef
 
 其中，$$ m e a n ( x _ { n } ) = \frac { 1 } { D } \sum _ { d = 1 } ^ { D } x _ { d , n }$$，$$ v a r ( x _ { n } ) = \frac { 1 } { D } \sum _ { d = 1 } ^ { D } ( x _ { d , n } - m e a n ( x _ { n } ) ) ^ { 2 }$$
 
-<img src="imgs/Introduction to Transformers/image-20241030115655881.png" alt="image-20241030115655881" style="zoom:50%;" />
+<img src="images/Introduction to Transformers/image-20241030115655881.png" alt="image-20241030115655881" style="zoom:50%;" />
 
 **最终形式**
 
-<img src="imgs/Introduction to Transformers/image-20241030115828184.png" alt="image-20241030115828184" style="zoom: 67%;" />
+<img src="images/Introduction to Transformers/image-20241030115828184.png" alt="image-20241030115828184" style="zoom: 67%;" />
