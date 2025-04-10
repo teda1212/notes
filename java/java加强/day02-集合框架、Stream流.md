@@ -1,4 +1,4 @@
-## 一、Set集合
+##  一、Set集合
 
 ![image-20250401210225872](images/day02-集合框架、Stream流/image-20250401210225872.png)
 
@@ -215,7 +215,7 @@ public int hashCode() {
   public class SetDemo3 {
       public static void main(String[] args) {
           // 目标：搞清楚TreeSet集合对于自定义对象的排序
-          // Set<Teacher> teachers = new TreeSet<>(((o1, o2) -> o1.getSalary() - o2.getSalary()));
+          // Set<Teacher> teachers = new TreeSet<>(((o1, o2) -> o2.getAge() - o1.getAge()));
           Set<Teacher> teachers = new TreeSet<>(new Comparator<Teacher>() {
               @Override
               public int compare(Teacher o1, Teacher o2) {
@@ -437,5 +437,457 @@ public HashSet() {
     // =上海}
     ```
 
-    
+
+## 三、Stream流
+
+### 1、认识Stream流
+
+- 是JDK8开始新增的一套API(java.util.stream.*)，**可以用于操作集合或者数组的数据**
+
+- 优势：**Stream流大量的结合了Lambda的语法风格来编程**，功能强大，性能高效，**代码简洁，可读性好**。
+
+  ```java
+  package com.itheima.demo3stream;
+  
+  import java.util.ArrayList;
+  import java.util.List;
+  
+  public class StreamDemo1 {
+      public static void main(String[] args) {
+          // 目标：认识Stream流，掌握其基本步骤，体会他的优势和特点
+          List<String> list = new ArrayList<>();
+          list.add("张无忌");
+          list.add("周芷若");
+          list.add("赵敏");
+          list.add("张强");
+          list.add("张三丰");
+  
+          // 找出姓张的人，且名字为三个字，存入新集合
+          // 1、用传统方法
+          List<String> list2 = new ArrayList<>();
+          for (String name : list) {
+              if (name.startsWith("张") && name.length() == 3) {
+                  list2.add(name);
+              }
+          }
+          System.out.println(list2); // [张无忌, 张三丰]
+  
+          // 2、用Stream流
+          List<String> newList2 = list.stream()
+                              .filter(name -> name.startsWith("张"))
+                              .filter(name -> name.length() == 3)
+                              .collect(Collectors.toList());
+          System.out.println(newList2);// [张无忌, 张三丰]
+      }
+  }
+  ```
+
+- Stream流的使用步骤
+
+  <img src="images/day02-集合框架、Stream流/image-20250407203014218.png" alt="image-20250407203014218" style="zoom:67%;" />
+
+### 2、Stream流的获取
+
+- 获取Stream流
+
+  - 获取**集合**的Stream流
+
+    ![image-20250407203340329](images/day02-集合框架、Stream流/image-20250407203340329.png)
+
+  - 获取**数组**的Stream流
+
+    ![image-20250407203424668](images/day02-集合框架、Stream流/image-20250407203424668.png)
+
+  ```java
+  package com.itheima.demo3stream;
+  
+  import java.util.*;
+  import java.util.stream.Stream;
+  
+  public class StreamDemo2 {
+      public static void main(String[] args) {
+          // 1.获取集合对象的Stream流
+          Collection<String> list = new ArrayList<>();
+          Stream<String> s1 = list.stream();
+  
+          // 2、Map集合的Stream流
+          Map<String, Integer> map = new HashMap<>();
+          // 获取键流
+          Stream<String> s2 = map.keySet().stream();
+          // 获取值流
+          Stream<Integer> s3 = map.values().stream();
+          // 获取键值对流
+          Stream<Map.Entry<String, Integer>> s4 = map.entrySet().stream();
+  
+          // 3、数组的Stream流
+          String[] arr = new String[]{"张三", "李四", "王五"};
+          Stream<String> s5 = Arrays.stream(arr);
+          Stream<String> s6 = Stream.of(arr);
+          Stream<String> s7 = Stream.of("张三", "李四", "王五", "赵六");// 可变参数，给一个、多个或者数组
+          
+      }
+  }
+  ```
+
+### 3、Stream流的方法
+
+- 中间方法指的是调用完成后会返回新的Stream流，可以继续使用(支持链式编程)
+
+![image-20250407205455883](images/day02-集合框架、Stream流/image-20250407205455883.png)
+
+```java
+package com.itheima.demo3stream;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+public class StreamDemo3 {
+    public static void main(String[] args) {
+        // 目标：掌握Stream流中常用方法，对流上数据进行处理（返回新流：链式编程）
+        List<String> list = new ArrayList<>();
+        list.add("张无忌");
+        list.add("周芷若");
+        list.add("赵敏");
+        list.add("张强");
+        list.add("张三丰");
+
+        // 1、过滤方法
+        list.stream().filter(name -> name.startsWith("张") && name.length()==3).forEach(System.out::println);
+
+        // 2、排序方法
+        List<Double> scores = new ArrayList<>();
+        scores.add(99.5);
+        scores.add(66.5);
+        scores.add(88.5);
+        scores.add(77.5);
+        scores.add(77.5);
+
+        scores.stream().sorted((o1, o2) -> Double.compare(o2, o1)).forEach(System.out::println);// 降序
+        System.out.println("=====");
+        scores.stream().sorted().limit(2).forEach(System.out::println);// 升序，只要前两名
+        System.out.println("=====");
+        scores.stream().sorted().skip(2).forEach(System.out::println);// 升序，跳过前两名
+        System.out.println("=====");
+        // 如果希望自定义对象能够去重复，重写对象的hashCode和equals方法
+        scores.stream().sorted().distinct().skip(2).forEach(System.out::println);// 升序，去重，跳过前两名
+        System.out.println("=====");
+
+        // 3、映射/加工方法: 把流上原来的数据拿出来变成新数据又放到流上去
+        scores.stream().map(s -> "加十分后" + (s+10)).forEach(System.out::println);
+        System.out.println("=====");
+
+        // 4、合并流：两个流数据拼接成一个流
+        Stream<String> s1 = Stream.of("张无忌", "赵敏", "周芷若");
+        Stream<Integer> s2 = Stream.of(4, 5, 6);
+        Stream<Object> s3 = Stream.concat(s1, s2);
+        s3.forEach(System.out::println);
+
+    }
+}
+```
+
+### 4、Stream流的终结方法
+
+- 终结方法指的是调用完成后，不会返回新的流，没法继续使用流了
+
+![image-20250407213934982](images/day02-集合框架、Stream流/image-20250407213934982.png)
+
+```java
+package com.itheima.demo3stream;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+public class StreamDemo4 {
+    public static void main(String[] args) {
+        // 目标：掌握Stream流的终结方法
+        List<Teacher> list = new ArrayList<>();
+        list.add(new Teacher("张无忌", 18, 9999.9));
+        list.add(new Teacher("赵敏", 20, 8888.8));
+        list.add(new Teacher("周芷若", 16, 7777.7));
+        list.add(new Teacher("金毛狮王", 60, 16666.6));
+        // 1、终结方法：forEach遍历
+        list.stream().filter(t -> t.getSalary() > 8000).forEach(System.out::println);
+        System.out.println("=====");
+        // 2、终结方法：count统计个数
+        long count = list.stream().filter(t -> t.getSalary() > 8000).count();
+        System.out.println(count);
+        System.out.println("=====");
+        // 3、终结方法：max获取最大值/min获取最小值
+        Optional<Teacher> max = list.stream().max((t1, t2) -> Double.compare(t1.getSalary(), t2.getSalary()));
+        Teacher maxTeacher = max.get();// 获取Optional对象中的元素
+        System.out.println(maxTeacher);
+    }
+}
+```
+
+- 收集Stream流：就是把Stream流操作后的结果转回到集合或者数组中去返回。
+- Stream流：方便操作集合/数组的手段；集合/数组：才是开发中的目的
+
+![image-20250407214945198](images/day02-集合框架、Stream流/image-20250407214945198.png)
+
+```java
+// 收集到集合中去
+Stream<String> s1 =  names.stream().filter(name -> name.startsWith("张") && name.length()==3);
+List<String> newList = s1.collect(Collectors.toList());
+System.out.println(newList);
+
+// 收集到Set集合中去
+// Set<String> newSet = s1.collect(Collectors.toSet());// 报错，只能收集一次
+Stream<String> s2 =  names.stream().filter(name -> name.startsWith("张") && name.length()==3);
+Set<String> newSet = s2.collect(Collectors.toSet());
+System.out.println(newSet);
+
+// 收集到数组中去
+Stream<String> s3 =  names.stream().filter(name -> name.startsWith("张") && name.length()==3);
+Object[] arr = s3.toArray();
+System.out.println("数组: "+ Arrays.toString(arr));
+
+// 收集到Map集合中去:键是老师名称，值是老师薪水,按薪水降序排序
+// Map<String, Double> map = list.stream()
+//         .collect(Collectors.toMap(new Function<Teacher, String>() {
+//             @Override
+//             public String apply(Teacher teacher) {
+//                 return teacher.getName();
+//             }
+//         }, new Function<Teacher, Double>() {
+//             @Override
+//             public Double apply(Teacher teacher) {
+//                 return teacher.getSalary();
+//             }
+//         }));
+Map<String, Double> map = list.stream().collect(Collectors.toMap(Teacher::getName, Teacher::getSalary));
+System.out.println(map);
+```
+
+## 四、综合小案例：斗地主游戏
+
+### 1、前置知识：可变参数、Collections
+
+- 方法中的可变参数：就是一种特殊的形参，定义在方法、构造器的形参列表里，格式是：**数据类型... 参数名称**
+- **可变参数的特点和好处**
+  - 特点：可以不传数据给它；可以传一个或同时传多个数据给它；也可以传一个数组给它。
+  - 好处：常常用来灵活接收数据。
+- **可变参数的注意事项**
+  - **可变参数在方法内部就是一个数组**
+  - 一个形参列表中，可变参数只能有一个
+  - 可变参数必须放在形参列表的最后面
+
+```java
+package com.itheima.demo4test;
+
+public class ParamDemo1 {
+    public static void main(String[] args) {
+        // 目标：认识可变参数
+        show();// 不传参数
+        System.out.println("====");
+        show(1);// 传一个参数
+        System.out.println("====");
+        show(1,2,3);// 传多个参数
+        System.out.println("====");
+        show(new int[]{1,2,3,4});// 传一个数组
+    }
+
+    // 注意：可变参数只能是最后一个参数，只能有一个
+    public static void show(int... arr) {
+        // 可变参数对内实际上就是数组，arr就是数组
+        for (int i : arr) {
+            System.out.println(i);
+        }
+        System.out.println(arr.length);
+    }
+}
+```
+
+- Collections工具类：用来**操作集合**的工具类
+
+- Collections提供的静态方法
+
+  ![image-20250407222414078](images/day02-集合框架、Stream流/image-20250407222414078.png)
+
+```java
+package com.itheima.demo4test;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class CollectionsDemo2 {
+    public static void main(String[] args) {
+        // 目标：Collections工具类
+        List<String> list = new ArrayList<>();
+        // list.add("张无忌");
+        // list.add("周芷若");
+        // list.add("赵敏");
+        // list.add("张强");
+        // list.add("张三丰");
+        // 1、Collections批量添加
+        Collections.addAll(list, "张无忌","周芷若", "赵敏", "张强", "张三丰");
+        System.out.println(list);
+
+        // 2、打乱顺序
+        Collections.shuffle(list);
+        System.out.println(list);
+
+        // 3、Collections排序：按长度升序排序
+        Collections.sort(list, (o1, o2) -> o1.length() - o2.length());
+        System.out.println(list);
+    }
+}
+```
+
+### 2、案例：斗地主游戏
+
+需求：
+
+- 总共有54张牌
+- 点数：3, 4, 5, 6, 7, 8, 9, 10, J, Q, K, A, 2
+- 花色："♠", "♥", "♣", "♦"
+- 大小王："大王🃏", "小王🃏"
+- 斗地主：发出51张牌，剩下3张作为底牌
+
+分析实现：
+
+- 启动游戏房间的时候，应提前准备好54张牌
+- 接着，需要完成洗牌、发牌、对牌排序、看牌
+
+代码：
+
+- 创建卡牌对象
+
+  ```java
+  package com.itheima.demo4test;
+  
+  import lombok.AllArgsConstructor;
+  import lombok.Data;
+  import lombok.NoArgsConstructor;
+  
+  @Data
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public class Card {
+      private String size;
+      private String color;
+      private int num; // 表示牌的大小
+  
+      @Override
+      public String toString() {
+          return color+size;
+      }
+  }
+  ```
+
+- 创建游戏房间类
+
+  ```java
+  package com.itheima.demo4test;
+  
+  import java.util.*;
+  
+  public class Room {
+      // 1、准备好54张牌，给房间使用：定义一个集合容器装54张牌
+      private ArrayList<Card> allCards = new ArrayList<>();
+      // 2、初始化54张牌，放到集合中
+      {
+          // 3、准备点数
+          String[] sizes = {"3","4","5","6","7","8","9","10","J","Q","K","A","2"};
+          // 4、准备花色
+          String[] colors = {"♠", "♥", "♣", "♦"};
+          // 5、组合点数和花色，得到54张牌
+          int num = 0;
+          for (String size : sizes) {
+              num ++;
+              for (String color : colors) {
+                  // 6、创建一个牌对象，把点数和花色封装到对象中
+                  Card card = new Card(size, color, num);
+                  // 7、把牌对象放到集合中
+                  allCards.add(card);
+              }
+          }
+          Collections.addAll(allCards, new Card("","🂠",++num), new Card("","🃏",++num));
+          System.out.println("新牌是: " + allCards);
+      }
+  
+      public void start(){
+          // 8、洗牌，打乱牌的顺序
+          Collections.shuffle(allCards);
+          System.out.println("洗牌后: " + allCards);
+  
+          // 9、发牌，定义3个玩家：有朝政、无忌、赵敏
+          Map<String, List<Card>> players = new HashMap<>();
+          List<Card> ycz = new ArrayList<>();
+          players.put("有朝政", ycz);
+          List<Card> wj = new ArrayList<>();
+          players.put("无忌", wj);
+          List<Card> zm = new ArrayList<>();
+          players.put("赵敏", zm);
+  
+          // 只发出51张牌
+          for (int i = 0; i < allCards.size()-3; i++) {
+              Card card = allCards.get(i);
+              // 判断当前牌发给谁
+              if (i % 3 == 0) {
+                  ycz.add(card);
+              } else if (i % 3 == 1) {
+                  wj.add(card);
+              } else {
+                  zm.add(card);
+              }
+          }
+  
+          // 10、拿最后三张牌
+          List<Card> lastCards = allCards.subList(allCards.size()-3, allCards.size());
+          System.out.println("底牌是: " + lastCards);
+          String dizhu = "有朝政";
+          players.get(dizhu).addAll(lastCards);
+  
+          // 11、对牌进行排序
+          sortCards(ycz);
+          sortCards(wj);
+          sortCards(zm);
+  
+          // 12、看牌
+          for (Map.Entry<String, List<Card>> entry : players.entrySet()){
+              // 获取玩家名称
+              String name = entry.getKey();
+              // 获取玩家的牌
+              List<Card> card = entry.getValue();
+              // 输出各个玩家的牌
+              System.out.println(name + "的牌是: " + card);
+          }
+      }
+      
+      // 降序排序
+      private void sortCards(List<Card> cards) {
+          cards.sort((o1, o2) -> o1.getNum() - o2.getNum());
+      }
+  
+      // private void sortCards(List<Card> cards){
+      //     Map<String, Integer> map = new HashMap<>();
+      //     String[] sizes = {"3","4","5","6","7","8","9","10","J","Q","K","A","2",""};
+      //     for (int i = 0; i < sizes.length; i++) {
+      //         map.put(sizes[i], i);
+      //     }
+      //     Collections.sort(cards, (o1, o2) -> map.get(o1.getSize()) - map.get(o2.getSize()));
+      // }
+  }
+  ```
+
+- 创建主函数
+
+  ```java
+  package com.itheima.demo4test;
+  
+  public class Game {
+      public static void main(String[] args) {
+          // 目标：开发斗地主游戏
+          // 1、每张牌都是一个对象，定义牌类
+          // 2、游戏房间也是一个对象，定义房间类（54张牌，开始启动）
+          Room room = new Room();
+          room.start();
+      }
+  }
+  ```
 
