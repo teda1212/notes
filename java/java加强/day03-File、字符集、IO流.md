@@ -222,7 +222,7 @@ public class RecursionDemo3 {
 }
 ```
 
-### 3、文件搜索
+### 3、文件搜索、文件夹删除
 
 **需求**：从D:盘中，搜索“QQ.exe” 这个文件，找到后直接输出其位置
 
@@ -332,6 +332,94 @@ public class FileDeleteTest5 {
         }
 
         return dir.delete();
+    }
+}
+```
+
+## 四、字符集
+
+### 1、常见字符集介绍
+
+<img src="images/day03-File、字符集、IO流/image-20250410212835864.png" alt="image-20250410212835864" style="zoom: 33%;" />
+
+**标准ASCII字符集**
+
+- [ASCII](‪../java基础/day01-Java基础.md)(American Standard Code for Information Interchange)： 美国信息交换标准代码，包括了英文、符号等
+-  标准ASCII使用**1个字节**存储一个字符，**首位是0**，因此，总共可表示128个字符，对美国佬来说完全够用
+
+**GBK（汉字内码扩展规范，国标）**
+
+- 汉字编码字符集，包含了2万多个汉字等字符，GBK中一个中文字符编码成**2个字节**的形式存储。
+
+- 注意：GBK兼容了ASCII字符集，**汉字首位是1**
+
+  <img src="images/day03-File、字符集、IO流/image-20250410214741693.png" alt="image-20250410214741693" style="zoom:50%;" />
+
+**Unicode字符集(统一码，也叫万国码)**
+
+- Unicode是国际组织制定的，可以容纳世界上所有文字、符号的字符集。
+- UTF-32: **4个字节**表示一个字符，可以存42亿多个字符
+
+==**UTF-8字符集(默认都用，最广泛)**==
+
+- 是Unicode字符集的一种编码方案，采取**可变长**编码方案，共分四个长度区：1个字节，2个字节，3个字节，4个字节
+
+- **英文字符、数字**等只占**1个字节**（兼容标准ASCII编码），**汉字**字符占用**3个字节**。
+
+  | **UTF-8编码方式(二进制)**                           |
+  | --------------------------------------------------- |
+  | **0**xxxxxxx （ASCII码）                            |
+  | **110**xxxxx **10**xxxxxx                           |
+  | **1110**xxxx **10**xxxxxx **10**xxxxxx              |
+  | **11110**xxx **10**xxxxxx **10**xxxxxx **10**xxxxxx |
+
+  <img src="./images/day03-File、字符集、IO流/image-20250410220112910.png" alt="image-20250410220112910" style="zoom:50%;" align="left" />
+
+重点：
+
+- ASCII字符集：只有英文、数字、符号等，占1个字节。
+- GBK字符集：汉字占2个字节，英文、数字占1个字节。
+- UTF-8字符集：汉字占3个字节，英文、数字占1个字节。
+
+注意：
+
+- **字符编码时使用的字符集，和解码时使用的字符集必须一致，==否则会出现乱码==**
+- **英文，数字一般不会乱码，因为很多字符集都兼容了ASCII编码**
+
+例子：
+
+a我m 
+
+编码(GBK): 0xxxxxxx 1xxxxxxx xxxxxxxx 0xxxxxxx
+
+解码(UTF-8): 0xxxxxxx ? ? 0xxxxxxx
+
+### 2、字符集的编码、解码操作
+
+![image-20250410221120683](./images/day03-File、字符集、IO流/image-20250410221120683.png)
+
+```java
+package com.itheima.demo3charset;
+
+import java.util.Arrays;
+
+public class CharSetDemo1 {
+    public static void main(String[] args) throws Exception {
+        // 目标：实现字符编码和解码
+        // 1、编码
+        String name = "我爱你中国abc666";
+
+        // byte[] bytes = name.getBytes();// 使用平台默认的UTF-8编码,5*3+6*1
+        byte[] bytes = name.getBytes("GBK");// 指定GBK进行编码5*2+6*1
+        System.out.println(bytes.length);
+        System.out.println(Arrays.toString(bytes));
+
+        // 2、解码
+        String name2 = new String(bytes);// 平台默认的UTF-8解码
+        System.out.println(name2);// 乱码：�Ұ����й�abc666
+
+        String name3 = new String(bytes,"GBK");
+        System.out.println(name3);// 正确解码：我爱你中国abc666
     }
 }
 ```
