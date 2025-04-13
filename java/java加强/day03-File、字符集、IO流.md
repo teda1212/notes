@@ -1,3 +1,5 @@
+
+
 ## 一、存储&读写数据的方案
 
 File、IO流
@@ -373,7 +375,7 @@ public class FileDeleteTest5 {
   | **1110**xxxx **10**xxxxxx **10**xxxxxx              |
   | **11110**xxx **10**xxxxxx **10**xxxxxx **10**xxxxxx |
 
-  <img src="./images/day03-File、字符集、IO流/image-20250410220112910.png" alt="image-20250410220112910" style="zoom:50%;" align="left" />
+  ![image-20250412115252566](./images/day03-File、字符集、IO流/image-20250412115252566.png)
 
 重点：
 
@@ -424,3 +426,783 @@ public class CharSetDemo1 {
 }
 ```
 
+## 五、IO流
+
+### 1、认识IO流
+
+读写文件数据
+
+![image-20250412103644523](./images/day03-File、字符集、IO流/image-20250412103644523.png)
+
+- IO流的分类
+
+  ![image-20250412104708117](./images/day03-File、字符集、IO流/image-20250412104708117.png)
+
+- IO流四大金刚
+  - 字节输入流InputStream
+  - 字节输出流OutputStream
+  - 字符输入流Reader
+  - 字符输出流Writer
+  
+  ![image-20250412105542768](./images/day03-File、字符集、IO流/image-20250412105542768.png)
+
+### 2、字节流
+
+#### 2.1 文件字节输入流(FileInputStream)
+
+- 作用：以内存为基准，可以把磁盘文件中的数据以字节的形式读入到内存中去
+
+  ![image-20250412105740134](./images/day03-File、字符集、IO流/image-20250412105740134.png)
+
+  ```java
+  // 1、创建文件字节输入流管道与源文件接通
+  InputStream is = new FileInputStream(new File("day03-file-io\\src\\com\\itheima\\ycz.txt"));
+  InputStream is = new FileInputStream("day03-file-io\\src\\com\\itheima\\ycz.txt");
+  
+  // 2.1 每次读取一个字节
+  // 定义一个变量记住每次读取的一个字节
+  // 问题：每次读1个字节，性能较差，读取汉字会乱码（因为汉字占3个字节）
+  int b;
+  while((b = is.read()) != -1){
+      System.out.print((char) b);
+  }
+  
+  // 2.2 每次读取多个字节
+  // 定义一个字节数组，用于每次读取字节
+  // 每次读多个，减少硬盘和内存交互次数，提升性能
+  // 问题：依然无法避免读取汉字输出乱码的问题，可能存在截断汉字字节的问题
+  byte[] buffer = new byte[3];
+  // 定义一个变量记住每次读了多少个字节
+  int len;
+  while ((len = is.read(buffer)) != -1) {
+      // 3、把读取的字节数组转换成字符串输出
+      // 假设字节为: abc666g
+      String str = new String(buffer);// 读出来是: abc 666 g66，最后一个字节不满3位，只替换第1位
+      String str = new String(buffer, 0, len);// abc 666 g，从第1个字节开始，读多少倒多少
+      System.out.println(str);
+  }
+  ```
+
+- **问题**
+
+  - 使用FileInputStream每次读取一个字节，读取性能较差，并且读取汉字输出会乱码
+  - 使用FileInputStream每次读取多个字节，读取性能得到了提升，但读取汉字输出还是会乱码
+  - **可以定义一个与文件一样大的字节数组，一次性读取完文件的全部字节**
+
+- InputStream的提供方法，**一次读取完全部字节**
+
+  ![image-20250412114300852](./images/day03-File、字符集、IO流/image-20250412114300852.png)
+
+  - 直接把文件数据全部读取到一个字节数组可以避免乱码
+
+  - 但是**如果文件过大，创建的字节数组也会过大，可能引起内存溢出**
+
+- **读取文本**适合用**字符流**；**字节流**适合做**数据的转移**，比如：**文件复制**
+
+#### 2.2 文件字节输出流(FileOutputStream)
+
+- 作用：以内存为基准，把内存中的数据以字节的形式写出到文件中去
+
+  ![image-20250412121018985](./images/day03-File、字符集、IO流/image-20250412121018985.png)
+
+  ```java
+  package com.itheima.demo5fileoutputstream;
+  
+  import java.io.FileNotFoundException;
+  import java.io.FileOutputStream;
+  import java.io.OutputStream;
+  
+  public class FileOutputStreamDemo1 {
+      public static void main(String[] args) throws Exception {
+          // 目标：学会使用文件字节输出流
+          // 1、 创建一个文件字节输出流管道与目标文件接通
+          // OutputStream fos = new FileOutputStream("day03-file-io\\src\\com\\itheima\\outycz.txt");// 覆盖管道
+          OutputStream fos = new FileOutputStream("day03-file-io\\src\\com\\itheima\\outycz.txt", true);// 追加管道
+          // 2、写入数据，一个字节
+          fos.write(97);// 'a'的ASCII码
+          fos.write('a');
+          // fos.write('徐'); // 乱码，因为一个中文占3个字节，一个字节不能存中文
+          fos.write("\r\n".getBytes()); // 换行
+  
+          // 3、写入数据，多个字节
+          byte[] bytes = "游朝政太牛了".getBytes();
+          fos.write(bytes);
+          fos.write("\r\n".getBytes());
+  
+          // 4、写一个字节数组的一部分出去
+          fos.write(bytes, 0, 3);// 写0-2字节，一个汉字 游
+          fos.write("\r\n".getBytes());
+  
+          // 5、关闭流
+          fos.close(); // 关闭管道，释放资源
+      }
+  }
+  ```
+
+#### 2.3 文件复制和释放资源
+
+![image-20250412140422163](./images/day03-File、字符集、IO流/image-20250412140422163.png)
+
+- 任何文件的底层都是字节，字节流做复制，是一字不漏的转移完全部字节，只要复制后的文件格式一致就没问题
+
+  ```java
+  package com.itheima.demo6copy;
+  
+  import java.io.*;
+  
+  public class CopyDemo {
+      // 目标：使用字节流完成文件的复制操作
+      public static void main(String[] args) {
+          // 源文件：D:\Pictures\pic.png
+          // 目标文件：D:\Desktop\pic_copy.png
+          try {
+              copyFile("D:\\Pictures\\pic.png","D:\\Desktop\\pic_copy.png");
+          } catch (Exception e) {
+              throw new RuntimeException(e);
+          }
+      }
+  
+      private static void copyFile(String srcPath, String destPath) throws Exception {
+          // 1、创建一个文件字节输入流、输出流管道与源文件相通
+          InputStream is = new FileInputStream(srcPath);
+          OutputStream os = new FileOutputStream(destPath);
+  
+          // 2、读取一个字节数组，写入一个字节数组
+          byte[] buffer = new byte[1024];
+          int len;
+          while ((len = is.read(buffer)) != -1) {
+              os.write(buffer, 0, len);// 读取多少个字节就写入多少个字节
+          }
+          System.out.println("复制完成");
+  
+          os.close();
+          is.close();
+      }
+  }
+  ```
+
+- 释放资源，如果直接使用os.close();is.close(); 那么如果释放资源之前程序有误，后面释放资源的操作就不会执行，因此需要改进
+
+  - 改进方法1：try-catch-finally (无论try中的程序是正常执行了，还是出现了异常，最后都一定会执行finally区，除非JVM终止)
+
+    作用：一般用于在程序执行完成后进行资源的释放操作（专业级做法）
+
+    ```java
+    package com.itheima.demo6copy;
+    
+    import java.io.*;
+    
+    public class CopyDemo1 {
+        // 目标：使用字节流完成文件的复制操作
+        public static void main(String[] args) {
+            // 源文件：D:\Pictures\pic.png
+            // 目标文件：D:\Desktop\pic_copy.png
+    
+            copyFile("D:\\Pictures\\pic.png","D:\\Desktop\\pic_copy.png");
+    
+        }
+    
+        private static void copyFile(String srcPath, String destPath) {
+            InputStream is = null;
+            OutputStream os = null;
+            try {
+                // 1、创建一个文件字节输入流、输出流管道与源文件相通
+                is = new FileInputStream(srcPath);
+                os = new FileOutputStream(destPath);
+    
+                // 2、读取一个字节数组，写入一个字节数组
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, len);// 读取多少个字节就写入多少个字节
+                }
+                System.out.println("复制完成");
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if(os != null) os.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                try {
+                    if(is != null) is.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    ```
+
+  - 改进方法2：**JDK 7开始提供了更简单的资源释放方案：try-with-resource**，资源使用完毕后，会自动调用其close()方法，完成对资源的释放
+
+    ```java
+    package com.itheima.demo6copy;
+    
+    import java.io.*;
+    
+    
+    public class CopyDemo2 {
+        // 目标：使用字节流完成文件的复制操作
+        public static void main(String[] args) {
+            // 源文件：D:\Pictures\pic.png
+            // 目标文件：D:\Desktop\pic_copy.png
+    
+            copyFile("D:\\Pictures\\pic.png","D:\\Desktop\\pic_copy.png");
+    
+        }
+    
+        private static void copyFile(String srcPath, String destPath) {
+            // try(只能放资源对象)
+            try(InputStream is = new FileInputStream(srcPath);
+                OutputStream os = new FileOutputStream(destPath);) {
+                // 2、读取一个字节数组，写入一个字节数组
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, len);// 读取多少个字节就写入多少个字节
+                }
+                System.out.println("复制完成");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    ```
+
+    注意：
+
+    - () 中只能放置资源，否则报错
+
+    - 资源一般指的是最终实现了AutoCloseable接口
+
+      ![image-20250412144733979](./images/day03-File、字符集、IO流/image-20250412144733979.png)
+
+### 3、字符流
+
+#### 3.1 文件字符输入流(FileReader)
+
+- 作用：以内存为基准，可以把文件中的数据以字符的形式读入到内存中去
+
+  ![image-20250412150306373](./images/day03-File、字符集、IO流/image-20250412150306373.png)
+
+  ```java
+  package com.itheima.demo7fileReader;
+  
+  import java.io.FileReader;
+  import java.io.Reader;
+  
+  public class FileReaderDemo1 {
+      public static void main(String[] args) {
+          // 目标：使用字符流读取文本文件
+          // 1、创建文件字符输入流与文件流接通
+          try (Reader fr = new FileReader("day03-file-io\\src\\com\\itheima\\ycz3.txt")) {
+              // 2、定义一个变量，用来记录每次读取的字符
+              // int b;
+              // while((b = fr.read()) != -1){
+              //     System.out.print((char) b);
+              // }
+  
+              // 2、定义一个字符数组，用来每次读取多个字符
+              char[] buffer = new char[3];
+              int len;
+              while ((len = fr.read(buffer)) != -1) {
+                  String str = new String(buffer, 0, len)
+                  System.out.print(str);
+              }
+          }catch (Exception e){
+              e.printStackTrace();
+          }
+      }
+  }
+  ```
+
+  优点：文件字符输入流每次读取多个字符，性能较好（因为内存比硬盘更快，交互越少越好），而且按照字符读取，中文不会出现乱码
+
+#### 3.2 文件字符输出流(FileWriter)
+
+- 作用：以内存为基准，把内存中的数据以字符的形式写出到文件中去
+
+  ![image-20250412153943856](./images/day03-File、字符集、IO流/image-20250412153943856.png)
+
+  ```java
+  package com.itheima.demo8fileWriter;
+  
+  import java.io.FileWriter;
+  import java.io.Writer;
+  
+  public class FileWriterDemo1 {
+      public static void main(String[] args) {
+          // 1.创建一个字符输出流对象
+          try(    // 覆盖管道
+                  // Writer fw = new FileWriter("day03-file-io\\src\\com\\itheima\\outycz2.txt");
+                  // 追加管道
+                  Writer fw = new FileWriter("day03-file-io\\src\\com\\itheima\\outycz2.txt", true);
+                  ) {
+  
+              // 2.调用write方法，把数据写入到文件中
+              // 1、字符
+              fw.write('c');
+              fw.write(98);// b
+              fw.write("\r\n"); // 回车换行
+              // 2、字符串
+              fw.write("游朝政太牛了");
+              fw.write("\r\n");
+              // 3、字符数组
+              char[] chars = "quantaty".toCharArray();
+              fw.write(chars);
+              fw.write("\r\n");
+              // 4、字符数组的一部分
+              fw.write(chars, 1, 4);// 从第2个字符开始，输出4个字符
+              
+              // 不需要关闭/刷新，try-with-resources包含了close(),而close()又包含了flush()
+              // 刷新缓冲区
+              // fw.flush(); // 刷新缓冲区，将数据写入到文件
+              // 关闭流
+              // fw.close(); // 关闭资源，关闭包含了刷新
+          } catch (Exception e) {
+              e.printStackTrace();
+          }
+      }
+  }
+  ```
+
+- 注意：**字符输出流写出数据后，必须刷新流，或者关闭流**，写出去的数据才能生效
+
+  可以都先写到内存的缓冲区，最后再IO写入硬盘
+
+  ![image-20250412160447176](./images/day03-File、字符集、IO流/image-20250412160447176.png)
+
+### 4、缓冲流
+
+#### 4.1 缓冲流
+
+![image-20250412161625500](./images/day03-File、字符集、IO流/image-20250412161625500.png)
+
+- **BufferedInputStream/BufferedOutputStream缓冲字节输入/输出流**
+
+  - **作用：可以提高字节输入流读取数据的性能**
+  - **原理：缓冲字节输入流**自带了**8KB缓冲池**；**缓冲字节输出流**也自带了**8KB缓冲池**
+
+  ![image-20250412162810429](./images/day03-File、字符集、IO流/image-20250412162810429.png)
+
+  ![image-20250412163128601](./images/day03-File、字符集、IO流/image-20250412163128601.png)
+
+  ```java
+  try(InputStream fis = new FileInputStream(srcPath);
+      OutputStream fos = new FileOutputStream(destPath);
+      // 把低级的字节输入流包装成高级的缓冲字节输入流
+      InputStream bis = new BufferedInputStream(fis);
+      // 把低级的字节输出流包装成高级的缓冲字节输出流
+      OutputStream bos = new BufferedOutputStream(fos);
+     ) {
+      // 2、读取一个字节数组，写入一个字节数组
+      byte[] buffer = new byte[1024];
+      int len;
+      while ((len = bis.read(buffer)) != -1) {
+          bos.write(buffer, 0, len);// 读取多少个字节就写入多少个字节
+      }
+      System.out.println("复制完成");
+  } catch (Exception e) {
+      e.printStackTrace();
+  }
+  ```
+
+- **BufferedReader缓冲字符输入流**
+
+  - 作用：自带8K（8192）的字符缓冲池，可以提高字符输入流读取字符数据的性能
+
+  ![image-20250412164557004](./images/day03-File、字符集、IO流/image-20250412164557004.png)
+
+  ```java
+  package com.itheima.demo10bufferedReader;
+  
+  import java.io.BufferedReader;
+  import java.io.FileReader;
+  import java.io.Reader;
+  
+  public class BufferedReaderDemo1 {
+      public static void main(String[] args) {
+          // 目标：使用缓冲字符流完成字符文件的读取
+          // 1、创建文件字符输入流与文件流接通
+          try (
+                  Reader fr = new FileReader("day03-file-io\\src\\com\\itheima\\ycz3.txt");
+                  BufferedReader br = new BufferedReader(fr)
+          ){
+              // 循环按行读取文件
+              // 1、定义一个字符串变量，用于记住每次读的一行数据
+              String line;
+              while((line = br.readLine()) != null){
+                  System.out.println(line);
+              }
+          }catch (Exception e){
+              e.printStackTrace();
+          }
+      }
+  }
+  ```
+
+- BufferedWriter缓冲字符输出流
+
+  - 作用：自带8K的字符缓冲池，可以提高字符输出流写字符数据的性能
+
+  ![image-20250412170410607](./images/day03-File、字符集、IO流/image-20250412170410607.png)
+
+  ```java
+  package com.itheima.demo11bufferedWriter;
+  
+  import java.io.BufferedWriter;
+  import java.io.FileWriter;
+  import java.io.Writer;
+  
+  public class BufferedWriterDemo1 {
+      public static void main(String[] args) {
+          // 1.创建一个字符输出流对象
+          try(    // 覆盖管道
+                  // Writer fw = new FileWriter("day03-file-io\\src\\com\\itheima\\outycz2.txt");
+                  // 追加管道
+                  Writer fw = new FileWriter("day03-file-io\\src\\com\\itheima\\outycz2.txt", true);
+                  BufferedWriter bw = new BufferedWriter(fw);
+          ) {
+              // 2.调用write方法，把数据写入到文件中
+              // 1、字符
+              bw.write('c');
+              bw.write(98);// b
+              bw.newLine(); // 换行
+              // 2、字符串
+              bw.write("游朝政太牛了");
+              bw.newLine();
+              // 3、字符数组
+              char[] chars = "quantaty".toCharArray();
+              bw.write(chars);
+              bw.newLine();
+              // 4、字符数组的一部分
+              bw.write(chars, 1, 4);// 从第2个字符开始，输出4个字符
+  
+          } catch (Exception e) {
+              e.printStackTrace();
+          }
+      }
+  }
+  ```
+
+#### 4.2 缓冲流案例——恢复《出师表》顺序
+
+```java
+package com.itheima.demo11bufferedWriter;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class BufferedTest2 {
+    public static void main(String[] args) {
+        // 目标：完成出师表排序
+        // 1、 创建缓存输入字符流与文件流接通
+        File outFile = new File("day03-file-io\\src\\com\\itheima\\csbOut.txt");
+        if(!outFile.exists()){
+            try {
+                outFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try (	  // 1、 创建缓存输入字符流和缓存输出字符流与文件流接通
+                Reader fr = new FileReader("day03-file-io\\src\\com\\itheima\\csb.txt");
+                BufferedReader br = new BufferedReader(fr);
+                Writer fw = new FileWriter(outFile);
+                BufferedWriter bw = new BufferedWriter(fw)
+        ){
+            // 2、提前准备一个List集合，用来存储出师表内容
+            List<String> paper = new ArrayList<>();
+            // 3、按行循环读取出师表内容，并把内容存储到List集合中
+            String line;
+            while((line = br.readLine()) != null){
+                paper.add(line);
+            }
+
+            // 4、对List集合按首字符进行排序
+            Collections.sort(paper);
+            System.out.println(paper);
+
+            // 5、把排序后的内容按行写入到文件
+            for (String str : paper){
+                bw.write(str);
+                bw.newLine();
+            }
+
+            System.out.println("处理完毕");
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### 5、原始流和缓冲流的性能分析
+
+**测试用例：**
+
+- 分别使用原始的字节流，以及字节缓冲流复制一个很大视频
+
+**测试步骤：**
+
+①使用低级的字节流按照一个一个字节的形式复制文件。
+
+②使用低级的字节流按照字节数组的形式复制文件。
+
+③使用高级的缓冲字节流按照一个一个字节的形式复制文件。
+
+④**使用高级的缓冲字节流按照字节数组的形式复制文件**。
+
+```java
+package com.itheima.demo11bufferedWriter;
+
+import java.io.*;
+
+public class TimeTest3 {
+    private static final String SRC_FILE = "D:\\BaiduNetdiskDownload\\6、Java+AI（Java基础入门到大牛）\\2. JavaSE基础加强6天课程\\day03-FIle、字符集、IO流\\视频\\02-File-操作文件，删除文件，创建文件.mp4";
+    private static final String DEST_FILE = "D:\\Desktop\\";
+    public static void main(String[] args) {
+
+        // 目标：低级流，缓冲流性能分析
+        // ①使用低级的字节流按照一个一个字节的形式复制文件: 非常慢
+        //copyFile1();
+        // ②使用低级的字节流按照字节数组的形式复制文件：比较慢
+        copyFile2();
+        // ③使用高级的缓冲字节流按照一个一个字节的形式复制文件：虽然是高级管道，但也是一个个复制，很慢
+        copyFile3();
+        // ④使用高级的缓冲字节流按照字节数组的形式复制文件：非常快，推荐使用
+        copyFile4();
+    }
+
+    private static void copyFile4() {
+        // 拿到系统当前时间
+        long start = System.currentTimeMillis();
+        try ( InputStream is = new FileInputStream(SRC_FILE);
+              OutputStream os = new FileOutputStream(DEST_FILE + "4.mp4" );
+              InputStream bis = new BufferedInputStream(is);
+              OutputStream bos = new BufferedOutputStream(os);
+        ){
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = bis.read(buffer)) != -1){
+                bos.write(buffer, 0 ,len);
+            }
+            long end = System.currentTimeMillis();
+            System.out.println("高级缓冲字节流字节数组复制文件耗时：" + (end - start)/1000.0 + "秒");
+            System.out.println(new File(DEST_FILE + "4.png").getAbsoluteFile());
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private static void copyFile3() {
+        // 拿到系统当前时间
+        long start = System.currentTimeMillis();
+        try ( InputStream is = new FileInputStream(SRC_FILE);
+              OutputStream os = new FileOutputStream(DEST_FILE + "3.mp4");
+              InputStream bis = new BufferedInputStream(is);
+              OutputStream bos = new BufferedOutputStream(os);
+        ){
+            int b;
+            while ((b = bis.read()) != -1){
+                bos.write(b);
+            }
+            long end = System.currentTimeMillis();
+            System.out.println("高级缓冲字节流一个一个字节复制文件耗时：" + (end - start)/1000.0 + "秒");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private static void copyFile2() {
+        // 拿到系统当前时间
+        long start = System.currentTimeMillis();// 此刻时间毫秒值：1970-1-1到此刻的时间毫秒值
+        // 3、定义一个字节输入流，把源文件读入到程序
+        try (
+                InputStream is = new FileInputStream(SRC_FILE);
+                OutputStream os = new FileOutputStream(DEST_FILE + "2.mp4");
+        ){
+            byte[] buffer = new byte[1024];// 1KB
+            int len;
+            while((len = is.read(buffer)) != -1){
+                os.write(buffer, 0, len);
+            }
+            long end = System.currentTimeMillis();
+            System.out.println("低级字节流字节数组复制文件耗时：" + (end - start)/1000.0 + "秒");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public static void copyFile1(){
+        // 拿到系统当前时间
+        long start = System.currentTimeMillis();// 此刻时间毫秒值：1970-1-1到此刻的时间毫秒值
+        // 3、定义一个字节输入流，把源文件读入到程序
+        try (
+                InputStream is = new FileInputStream(SRC_FILE);
+                OutputStream os = new FileOutputStream(DEST_FILE + "1.mp4");
+        ){
+            int b;
+            while((b = is.read()) != -1){
+                os.write(b);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        long end = System.currentTimeMillis();
+        System.out.println("低级字节流一个一个字节复制文件耗时：" + (end - start)/1000.0 + "秒");
+    }
+}
+```
+
+### 6、其他流
+
+![image-20250412184818624](./images/day03-File、字符集、IO流/image-20250412184818624.png)
+
+#### 6.1 字符输入转换流(InputStreamReader)
+
+- 解决不同编码时，字符流读取文本内容乱码的问题。
+- 解决思路：先获取文件的原始字节流，再将其按真实的字符集编码转成字符输入流，这样字符输入流中的字符就不乱码了。
+
+![image-20250412185605977](./images/day03-File、字符集、IO流/image-20250412185605977.png)
+
+```java
+package com.itheima.demo12inputstreamReader;
+
+import java.io.*;
+
+public class Demo2 {
+    public static void main(String[] args) {
+        // 目标：使用字符输入流InputStreamReader，解决不同编码读取乱码的问题。
+        // 代码：UTF-8 文件：UTF-8 读取不乱码
+        // 代码：UTF-8 文件：GBK 读取乱码
+        try (
+                // 1、提取文件的原始字节输入流
+                InputStream is = new FileInputStream("day03-file-io\\src\\com\\itheima\\gbk.txt");
+                // 2、指定字符集把原始字节输入流转换为字符输入流
+                Reader isr = new InputStreamReader(is, "GBK");
+                // 3、把字符输入流转换为字符缓冲输入流
+                BufferedReader br = new BufferedReader(isr)
+        ) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+#### 6.2 打印流(PrintStream/PrintWriter)
+
+- **PrintStream/PrintWriter（打印流）**
+
+  作用：打印流可以实现更方便、更高效的打印数据出去，能实现打印啥出去就是啥出去
+
+- PrintStream
+
+  ![image-20250412192535328](./images/day03-File、字符集、IO流/image-20250412192535328.png)
+
+- PrintWriter
+
+  ![image-20250412193223728](./images/day03-File、字符集、IO流/image-20250412193223728.png)
+
+```java
+package com.itheima.demo13printstream;
+
+import java.io.PrintStream;
+import java.io.PrintWriter;
+
+public class PrintStreamDemo1 {
+    public static void main(String[] args) {
+        try (
+                //PrintStream ps = new PrintStream("day03-file-io\\src\\com\\itheima\\ps.txt");
+                PrintWriter ps = new PrintWriter("day03-file-io\\src\\com\\itheima\\ps.txt");
+                ){
+            ps.println(97);
+            ps.println('a');
+            ps.println("quantaty");
+            ps.println(true);
+            ps.println(1.23);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+#### 6.3 数据输出/输入流(DataOutputStream/DataInputStream)
+
+- **DataOutputStream(数据输出流)**
+
+  允许把数据和其类型一并写出去
+
+  ![image-20250412193525121](./images/day03-File、字符集、IO流/image-20250412193525121.png)
+
+- **DataInputStream数据输入流)**
+
+  用于读取数据输出流写出去的数据
+
+  ![image-20250412193709427](./images/day03-File、字符集、IO流/image-20250412193709427.png)
+
+```java
+package com.itheima.demo13printstream;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
+public class DataStreamDemo2 {
+    public static void main(String[] args) {
+        // 目标：使用DataOutputStream和DataInputStream
+        try (
+                DataOutputStream dos = new DataOutputStream(new FileOutputStream("day03-file-io\\src\\com\\itheima\\data.txt"));
+                DataInputStream dis = new DataInputStream(new FileInputStream("day03-file-io\\src\\com\\itheima\\data.txt"))
+        ) {
+            // 通信的时候使用，怎么发就怎么接
+            // write后可能是乱码，因为是数据流
+            dos.writeInt(100);
+            dos.writeDouble(99.99);
+            dos.writeBoolean(true);
+            dos.writeUTF("你好");
+
+            System.out.println(dis.readInt());
+            System.out.println(dis.readDouble());
+            System.out.println(dis.readBoolean());
+            System.out.println(dis.readUTF());
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+## 六、IO框架
+
+- 框架（Framework）是一个预先写好的代码库或一组工具，旨在简化和加速开发过程
+
+- 框架的形式：一般是把类、接口等编译成class形式，再压缩成一个.jar结尾的文件发行出去。
+
+- IO框架：封装了Java提供的对文件、数据进行操作的代码，对外提供了更简单的方式来对文件进行操作，对数据进行读写等。
+
+- commons-io.jar框架导入到项目中：
+
+  ①在项目中创建一个文件夹：lib
+
+  ②将commons-io.jar文件复制到lib文件夹
+
+  ③在jar文件上点右键，选择 Add as Library -> 点击OK
+
+  ④在类中导包使用
+
+- Commons-io是apache开源基金组织提供的一组有关IO操作的小框架，目的是提高IO流的开发效率
+
+  ![image-20250413203954522](./images/day03-File、字符集、IO流/image-20250413203954522.png)

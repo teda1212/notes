@@ -214,11 +214,11 @@ final修饰变量的注意：
 
   - 控制移动方向
 
-    <img src="images\day07-面向对象高级\image-20250311125609079.png" alt="image-20250311125609079" style="zoom:67%;" />
+    <img src="images/day07-面向对象高级/image-20250311125609079.png" alt="image-20250311125609079" style="zoom:67%;" />
 
   - 控制取小数点的方式
 
-    <img src="images\day07-面向对象高级\image-20250311125851655.png" alt="image-20250311125851655" style="zoom:67%;" />
+    <img src="images/day07-面向对象高级/image-20250311125851655.png" alt="image-20250311125851655" style="zoom:67%;" />
 
 - 例子：移动操作
 
@@ -414,7 +414,7 @@ final修饰变量的注意：
 
 - 模板方法设计模式好处：提高代码的复用、并简化子类设计
 
-  <img src="images\day07-面向对象高级\image-20250311140515216.png" alt="image-20250311140515216" style="zoom:50%;" />
+  <img src="images/day07-面向对象高级/image-20250311140515216.png" alt="image-20250311140515216" style="zoom:50%;" />
 
 - **写法**
 
@@ -432,11 +432,11 @@ final修饰变量的注意：
 
   - 代码
 
-  ![image-20250311142857468](images\day07-面向对象高级\image-20250311142857468.png)
+  ![image-20250311142857468](images/day07-面向对象高级/image-20250311142857468.png)
 
   - 输出
 
-  <img src="images\day07-面向对象高级\image-20250311142451076.png" alt="image-20250311142451076" style="zoom: 67%;" />
+  <img src="images/day07-面向对象高级/image-20250311142451076.png" alt="image-20250311142451076" style="zoom: 67%;" />
 
 ## 五、接口(Interface)
 
@@ -866,7 +866,7 @@ final修饰变量的注意：
 
 - 需求：某智能家居系统，可以让用户选择要控制的家用设备（吊灯，电视机，洗衣机，落地窗），并可以对它们进行打开或者关闭操作
 
-  <img src="images\day07-面向对象高级\image-20250311174959553.png" alt="image-20250311174959553" style="zoom:50%;" />
+  <img src="images/day07-面向对象高级/image-20250311174959553.png" alt="image-20250311174959553" style="zoom:50%;" />
 
 - 测试类
 
