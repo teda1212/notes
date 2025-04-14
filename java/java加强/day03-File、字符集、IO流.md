@@ -1206,3 +1206,40 @@ public class DataStreamDemo2 {
 - Commons-io是apache开源基金组织提供的一组有关IO操作的小框架，目的是提高IO流的开发效率
 
   ![image-20250413203954522](./images/day03-File、字符集、IO流/image-20250413203954522.png)
+
+## 七、综合案例——石头迷阵历史最小步数
+
+展示历史胜利所用的最小步数
+1、在游戏界面上展示：历史胜利的最少步数
+2、创建一个文件记录历史最少步数
+3、每次胜利后都要比较当前步数和历史最小步数，如果当前步数小于历史最小步数，则更新历史最小步数
+4、每次游戏启动时都要展示历史最小步数
+
+```java
+private int readFileScore(){
+    // 读取文件中的最小步数
+    try(
+        Reader fr = new FileReader("stone-maze\\src\\score.txt");
+        BufferedReader br = new BufferedReader(fr);
+    ) {
+        String line = br.readLine();
+        return Integer.parseInt(line);
+    } catch (Exception e){
+        e.printStackTrace();
+        return 0;
+    }
+}
+
+private void writeFileScore(int count) {
+    // 读取文件中的最小步数
+    try(
+        Writer fw = new FileWriter("stone-maze\\src\\score.txt");
+        BufferedWriter br = new BufferedWriter(fw);
+    ) {
+        br.write(count + "");
+    } catch (Exception e){
+        e.printStackTrace();
+    }
+}
+```
+
