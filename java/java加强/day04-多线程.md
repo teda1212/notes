@@ -396,3 +396,441 @@ class MyThread2 extends Thread {
 }
 ```
 
+## 四、线程安全
+
+### 1、认识线程安全
+
+- **多个线程，同时操作同一个共享资源**的时候，可能会出现业务安全问题
+
+案例：取钱的线程安全问题
+
+- 场景：小明和小红是一对夫妻，他们有一个共同的账户，余额是10万元，如果小明和小红同时来取钱，并且2人各自都在取钱10万元，可能会出现什么问题呢
+
+  ![image-20250415203040534](./images/day04-多线程/image-20250415203040534.png)
+
+### 2、模拟线程安全问题
+
+问题场景：取钱
+
+**需求**
+
+- 小明和小红是一对夫妻，他们有一个共同的账户，余额是10万元，用程序模拟两人同时取钱10万元。
+
+**分析**
+
+① 怎样描述小明和小红的共同账户呢？**设计一个账户类，创建一个账户对象，代表2人的共享账户**
+
+② 怎样模拟两人同时取钱？**设计一个线程类，创建并启动两个线程，在线程的run方法中调用账户的取钱方法**
+
+**代码**
+
+![image-20250415205147509](./images/day04-多线程/image-20250415205147509.png)
+
+**结果**
+
+| 小明取钱成功，取了100000.0元<br/>小红取钱成功，取了100000.0元<br/>小明取钱成功，余额为：0.0元<br/>小红取钱成功，余额为：-100000.0元 |
+| ------------------------------------------------------------ |
+
+## 五、线程同步—解决线程安全问题
+
+### 1、认识线程同步
+
+- 线程同步是线程安全问题的解决方案
+
+**线程同步的核心思想**
+
+- 让多个线程先后依次访问共享资源，这样就可以避免出现线程安全问题
+
+**常见方案**
+
+- 加锁：每次只允许一个线程加锁，加锁后才能进入访问，访问完毕后自动解锁，然后其他线程才能再加锁进来
+
+  ![image-20250415205754792](./images/day04-多线程/image-20250415205754792.png)
+
+### 2、方式一：同步代码块
+
+- **作用**：把访问共享资源的核心代码给上锁，以此保证线程安全
+
+  ```java
+  synchronized(同步锁) {
+      访问共享资源的核心代码
+  }
+  ```
+
+- **原理**：每次只允许一个线程加锁后进入，执行完毕后自动解锁，其他线程才可以进来执行
+
+- **同步锁的注意事项**：对于当前同时执行的线程来说，同步锁必须是同一把（**同一个对象**），否则会出bug
+
+**代码**
+
+![image-20250415210520040](./images/day04-多线程/image-20250415210520040.png)
+
+**结果**
+
+| 小明取钱成功，取了100000.0元<br/>小明取钱成功，余额为：0.0元<br />小红取钱失败，余额不足 |
+| ------------------------------------------------------------ |
+
+上述代码的**缺点**：
+
+- 锁对象选择了一个唯一的对象("ycz")，会影响其他无关进程的执行（其他账户取钱也得等前面解锁后才能执行，影响其他账户）
+
+**锁对象的使用规范**
+
+- 建议**使用共享资源作为锁对象**，对于**实例方法**建议使用**this**作为锁对象
+
+  ```java
+  private double money;
+  public void drawMoney(double money){
+      // 拿到当前是谁取钱
+      String name = Thread.currentThread().getName();
+      // 判断卡余额是否足够
+      synchronized (this) {
+          if (this.money >= money) {
+              System.out.println(name + "取钱成功，取了" + money + "元");
+              this.money -= money;
+              System.out.println(name + "取钱成功，余额为：" + this.money+ "元");
+          } else {
+              System.out.println(name + "取钱失败，余额不足");
+          }
+      }
+  }
+  ```
+
+- 对于**静态方法**建议使用**字节码（类名.class）**对象作为锁对象
+
+  ```java
+  private static double money1;
+  public static void drawMoney(double money){
+      // 拿到当前是谁取钱
+      String name = Thread.currentThread().getName();
+      // 判断卡余额是否足够
+      synchronized (Account.class) {
+          if (money1 >= money) {
+              System.out.println(name + "取钱成功，取了" + money + "元");
+              money1 -= money;
+              System.out.println(name + "取钱成功，余额为：" + money1 + "元");
+          } else {
+              System.out.println(name + "取钱失败，余额不足");
+          }
+      }
+  }
+  ```
+
+### 3、方式二：同步方法
+
+- **作用**：把访问共享资源的核心方法给上锁，以此保证线程安全
+
+  ```java
+  修饰符 synchronized 返回值类型 方法名称(形参列表) {
+      操作共享资源的代码
+  }      
+  ```
+
+- **原理**：每次只能一个线程进入，执行完毕以后自动解锁，其他线程才可以进来执行
+
+  ```java
+  public synchronized void drawMoney(double money){
+      // 拿到当前是谁取钱
+      String name = Thread.currentThread().getName();
+  
+      // 判断卡余额是否足够
+      if (this.money >= money) {
+          System.out.println(name + "取钱成功，取了" + money + "元");
+          this.money -= money;
+          System.out.println(name + "取钱成功，余额为：" + this.money + "元");
+      } else {
+          System.out.println(name + "取钱失败，余额不足");
+      }
+  }
+  ```
+
+**同步方法底层原理**
+
+- 同步方法其实底层也是有隐式锁对象的，只是锁的范围是整个方法代码。
+- 如果方法是**实例方法**：同步方法默认用**this**作为的锁对象。
+- 如果方法是**静态方法**：同步方法默认用**类名.class**作为的锁对象。
+
+同步代码块好还是同步方法好？
+
+- **范围上：同步代码块锁的范围更小(锁坑位)，同步方法锁的范围更大(锁厕所)**
+- **可读性：同步方法更好**
+
+### 4、方式三：lock锁
+
+- Lock锁是JDK5开始提供的一个新的锁定操作，通过它可以创建出锁对象进行加锁和解锁，更灵活、更方便、更强大。
+
+- Lock是接口，不能直接实例化，可以采用它的实现类ReentrantLock来构建Lock锁对象。
+
+  <img src="./images/day04-多线程/image-20250415213248588.png" alt="image-20250415213248588" style="zoom:50%;" />
+
+```java
+private final Lock lk = new ReentrantLock();// 保护锁对象
+
+public synchronized void drawMoney(double money){
+    // 拿到当前是谁取钱
+    String name = Thread.currentThread().getName();
+    lk.lock();
+
+    try {
+        // 判断卡余额是否足够
+        if (this.money >= money) {
+            System.out.println(name + "取钱成功，取了" + money + "元");
+            this.money -= money;
+            System.out.println(name + "取钱成功，余额为：" + this.money + "元");
+        } else {
+            System.out.println(name + "取钱失败，余额不足");
+        }
+    } finally {
+        lk.unlock();// 即使异常也能释放锁
+    }
+}
+```
+
+锁对象建议加上什么修饰？
+
+- 建议使用**final**修饰，防止被别人篡改
+
+释放锁的操作建议放到哪里？
+
+- 建议将释放锁的操作放到**finally**代码块中，确保锁用完了一定会被释放
+
+## 六、线程池
+
+### 1、什么是线程池
+
+- 线程池就是一个可以复用线程的技术
+
+**不使用线程池的问题** 
+
+- 用户每发起一个请求，后台就需要创建一个新线程来处理，下次新任务来了肯定又要创建新线程处理的， **创建新线程的开销是很大的，并且请求过多时，肯定会产生大量的线程出来**，这样会严重影响系统的性能。
+
+**线程池的工作原理**
+
+<img src="./images/day04-多线程/image-20250415214448390.png" alt="image-20250415214448390"  />
+
+### 2、创建线程池
+
+- JDK 5.0起提供了代表线程池的接口：ExecutorService
+
+**如何创建线程池对象?**
+
+- 方式一：使用ExecutorService的实现类ThreadPoolExecutor自创建一个线程池对象
+
+  <img src="./images/day04-多线程/image-20250415214858798.png" alt="image-20250415214858798" style="zoom: 50%;" />
+
+  ![image-20250415215115587](./images/day04-多线程/image-20250415215115587.png)
+
+- 方式二：使用Executors（线程池的工具类）调用方法返回不同特点的线程池对象
+
+### 3、方式一：ThreadPoolExecutor
+
+- ExecutorService的常用方法(处理Runnable/Callable任务)
+
+  ![image-20250415220450745](./images/day04-多线程/image-20250415220450745.png)
+
+- 处理Runnable任务
+
+  ```java
+  package com.itheima.demo9executorService;
+  
+  import java.util.concurrent.*;
+  
+  public class ExecutorServiceDemo1 {
+      public static void main(String[] args) {
+          // 目标：创建线程池对象来使用
+          // 1、使用线程池的实现类：ThreadPoolExecutor声明七个参数创建线程池对象
+          ExecutorService pool = new ThreadPoolExecutor(
+                  3,// corePoolSize
+                  5,// maximumPoolSize
+                  10,// keepAliveTime
+                  TimeUnit.SECONDS,
+                  new ArrayBlockingQueue<>(3),
+                  Executors.defaultThreadFactory(),
+                  new ThreadPoolExecutor.AbortPolicy()
+          );
+  
+          // 2、使用线程池处理任务：看看会不会复用线程
+          Runnable target = new MyRunnable();
+          // 多次提交任务，复用线程池（里面有3个线程）
+          for (int i = 0; i < 5; i++) {
+              pool.execute(target);
+          }
+  
+          // 3、关闭线程池对象
+          // pool.shutdown();// 等所有任务执行完毕后再关闭
+          pool.shutdownNow();// 立刻关闭，并清空队列，不管任务是否执行完毕
+      }
+  }
+  ```
+
+**注意事项**
+
+- **什么时候开始**创建临时线程？
+
+  新任务提交时发现**核心线程都在忙**，**任务队列也满了**，**并且还可以创建临时线程**，此时才会创建临时线程
+
+- **什么时候会拒绝**新任务？
+
+  **核心线程和临时线程都在忙，任务队列也满了**，新的任务过来的时候才会开始拒绝任务。
+
+  ![image-20250415221641995](./images/day04-多线程/image-20250415221641995.png)
+
+```java
+package com.itheima.demo9executorService;
+
+import java.util.concurrent.*;
+
+public class ExecutorServiceDemo1 {
+    public static void main(String[] args) {
+        // 目标：创建线程池对象来使用
+        // 1、使用线程池的实现类：ThreadPoolExecutor声明七个参数创建线程池对象
+        ExecutorService pool = new ThreadPoolExecutor(
+                3,// corePoolSize
+                5,// maximumPoolSize
+                10,// keepAliveTime
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(3),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+
+        // 2、使用线程池处理任务：看看会不会复用线程
+        Runnable target = new MyRunnable();
+        // 多次提交任务，复用线程池（里面有3个线程）
+        for (int i = 0; i < 9; i++) {
+            // 第4个任务进入时，3个核心线程在忙，加入任务队列，等待3个核心线程忙完再执行
+            // 第7个任务加入队列时，发现核心线程都在忙且队列满，创建临时线程4
+            // 第8个任务加入队列时，发现3个核心线程和1个临时线程在忙且队列满，创建临时线程5
+            // 第9个任务加入队列时，发现3个核心线程和2个临时线程都在忙，且队列满，此时拒绝任务
+            pool.execute(target); // 3个核心线程在忙，第7个任务加入队列时，发现队列满，默认丢弃任务，并抛出异常
+        }
+
+        // 3、关闭线程池对象
+        pool.shutdown();// 等所有任务执行完毕后再关闭
+        // pool.shutdownNow();// 立刻关闭，并清空队列，不管任务是否执行完毕
+    }
+}
+
+package com.itheima.demo9executorService;
+
+// 1、定义一个线程任务类实现Runnable接口
+public class MyRunnable implements Runnable {
+    @Override
+    public void run() {
+        for (int i = 0; i < 5; i++){
+            System.out.println(Thread.currentThread().getName() + "-->" + i);
+            try {
+                Thread.sleep(Integer.MAX_VALUE);// 执行一个任务就不让动了
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+- 处理Callable任务
+
+  代码
+
+  ```java
+  package com.itheima.demo9executorService;
+  
+  import java.util.concurrent.*;
+  
+  public class ExecutorServiceDemo2 {
+      public static void main(String[] args) {
+          // 目标：创建线程池对象来处理Callable任务
+          // 1、使用线程池的实现类：ThreadPoolExecutor声明七个参数创建线程池对象
+          ExecutorService pool = new ThreadPoolExecutor(
+                  3,
+                  5,
+                  10,
+                  TimeUnit.SECONDS,
+                  new ArrayBlockingQueue<>(3),
+                  Executors.defaultThreadFactory(),
+                  new ThreadPoolExecutor.CallerRunsPolicy()
+          );
+  
+          // 2、使用线程池处理Callable任务
+          for (int i = 0; i < 5; i++){
+              Future<String> f = pool.submit(new MyCallable((i+1)*100));
+              try {
+                  String s = f.get();
+                  System.out.println(s);
+              } catch (Exception e) {
+                  e.printStackTrace();
+              }
+          }
+      }
+  }
+  
+  package com.itheima.demo9executorService;
+  
+  import java.util.concurrent.Callable;
+  
+  public class MyCallable implements Callable<String> {
+      private int n;
+      public MyCallable(int n) {
+          this.n = n;
+      }
+  
+      @Override
+      public String call() throws Exception {
+          int sum = 0;
+          for (int i = 1; i <= n; i++) {
+              sum += i;
+          }
+          return Thread.currentThread().getName() + "执行了" + n + "个数相加，结果是：" + sum;
+      }
+  }
+  ```
+
+  结果
+
+  | pool-1-thread-1执行了100个数相加，结果是：5050<br/>pool-1-thread-2执行了200个数相加，结果是：20100<br/>pool-1-thread-3执行了300个数相加，结果是：45150<br/>pool-1-thread-1执行了400个数相加，结果是：80200<br/>pool-1-thread-2执行了500个数相加，结果是：125250 |
+  | ------------------------------------------------------------ |
+
+### 4、方式二：Executors
+
+- 是一个线程池的**工具类**，提供了很多**静态方法**用于返回不同特点的线程池对象
+
+  ![image-20250415224937357](./images/day04-多线程/image-20250415224937357.png)
+
+- **注意 ：这些方法的底层，都是通过线程池的实现类ThreadPoolExecutor创建的线程池对象**
+
+  ```java
+  package com.itheima.demo9executorService;
+  
+  import java.util.concurrent.ExecutorService;
+  import java.util.concurrent.Executors;
+  import java.util.concurrent.Future;
+  
+  public class ExecutorsDemo3 {
+      public static void main(String[] args) {
+          // 目标：通过线程池工具类：Executors创建线程池对象。
+          // 1、使用线程池工具类：Executors创建线程池对象。
+          ExecutorService pool = Executors.newFixedThreadPool(3);
+  
+          // 2、使用线程池处理Callable任务
+          for (int i = 0; i < 5; i++){
+              Future<String> f = pool.submit(new MyCallable((i+1)*100));
+              try {
+                  String s = f.get();
+                  System.out.println(s);
+              } catch (Exception e) {
+                  e.printStackTrace();
+              }
+          }
+      }
+  }
+  ```
+
+- **Executors使用可能存在的陷阱**：大型并发系统环境中使用Executors如果不注意可能会出现系统风险，容易导致OOM(Out of Memory)
+
+  ![image-20250415225903543](./images/day04-多线程/image-20250415225903543.png)
+
+  
+
+  
+
