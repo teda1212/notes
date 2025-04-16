@@ -830,7 +830,147 @@ public class MyRunnable implements Runnable {
 
   ![image-20250415225903543](./images/day04-多线程/image-20250415225903543.png)
 
-  
+- 拓展：线程池的核心线程数量的配置公式(CPU密集型还是IO密集型)
 
-  
+## 七、并发、并行
+
+**进程**
+
+- 正在运行的程序（软件）就是一个独立的进程。
+- 线程是属于进程的，一个进程中可以同时运行很多个线程。
+- 进程中的多个线程其实是**并发和并行同时执行**的。
+
+**并发**：同时请求，在全局上一起执行
+
+- 进程中的线程是由CPU负责调度执行的，但CPU能同时处理线程的数量有限，为了保证全部线程都能往前执行，CPU会**轮询**为系统的每个线程服务，由于**CPU切换的速度很快**，给我们的**感觉这些线程在同时执行**，这就是并发
+
+**并行**：在某一时刻一起执行
+
+- 在同一个时刻上，同时有多个线程在被CPU调度执行
+
+## 八、抢红包项目
+
+需求
+
+- 100个员工，发200个红包，小红包在[1, 30]之间，占比80%；大红包[31, 100]之间，占比20%
+
+功能
+
+1. 系统模拟上述要求产生200个红包
+2. 模拟100个员工抢红包，需要输出哪个员工抢到哪个红包的过程，活动结束时需要提示活动结束
+3. 活动结束后，对100名员工所抢红包总金额降序排序
+
+主函数
+
+```java
+package com.itheima.demo10test;
+
+import java.util.*;
+
+public class ThreadTest {
+    // 目标：完成多线程综合案例
+    // 100个员工抢200个红包，结束后按总金额降序排序
+    // 大红包：31-100， 20%；小红包：1-30， 80%
+    // 100个员工：100个线程，抢200个红包
+    public static void main(String[] args) throws InterruptedException {
+        // 1、获取200个红包
+        List<Integer> redPackets = getRedPackets();
+        // 2、定义线程类创建100个员工线程，每个员工线程从redPackets集合中获取一个红包，并把红包放到一个集合中
+        List<GetRedPackets> threads = new ArrayList<>();
+        for(int i = 0; i < 100; i++){
+            GetRedPackets thread = new GetRedPackets(redPackets, i+1+"员工");
+            threads.add(thread);
+            thread.start();
+        }
+
+        for (GetRedPackets thread : threads) {
+            thread.join();
+        }
+
+        // 汇总结果
+        Map<String, Integer> finalMap = new HashMap<>();
+        for (GetRedPackets thread : threads) {
+            finalMap.putAll(thread.getMap());
+        }
+
+        // 按抢红包的额度降序排序并输出
+        List<Map.Entry<String, Integer>> list = new ArrayList<>(finalMap.entrySet());
+        list.sort((e1, e2) -> e2.getValue().compareTo(e1.getValue())); // 降序排序
+
+        // 输出结果
+        System.out.println("最终抢红包结果（按额度降序）：");
+        for (Map.Entry<String, Integer> entry : list) {
+            System.out.println(entry.getKey() + "抢到了" + entry.getValue() + "元");
+        }
+    }
+
+    // 准备200个随机的红包并返回，放到List集合中去返回
+    public static List<Integer> getRedPackets(){
+        List<Integer> redPackets = new ArrayList<>();
+
+        for (int i = 0; i < 200; i++) {
+            double random = Math.random();
+            int redPacket = random > 0.2 ? (int)(Math.random() * 30 + 1)
+                    : (int)(Math.random() * 70 + 31);
+            redPackets.add(redPacket);
+        }
+        return redPackets;
+    }
+}
+```
+
+抢红包线程类
+
+```java
+package com.itheima.demo10test;
+
+import lombok.Getter;
+
+import java.util.*;
+
+// 线程类
+public class GetRedPackets extends Thread{
+    private final List<Integer> redPackets;
+    @Getter
+    private Map<String, Integer> map = new HashMap<>();
+    public GetRedPackets(List<Integer> redPackets, String name) {
+        super(name);
+        this.redPackets = redPackets;
+    }
+    @Override
+    public void run() {
+        String name = Thread.currentThread().getName();
+        // 100个人抢redPackets中红包
+        while(true) {
+            synchronized (redPackets) {
+                if (redPackets.isEmpty()) {
+                    break;
+                }
+                // 随机取一个索引
+                int index = (int) (Math.random() * redPackets.size());
+                int redPacket = redPackets.remove(index);
+                System.out.println(name + "抢到了" + redPacket + "元");
+                if(!map.containsKey(name)) {
+                    map.put(name, redPacket);
+                } else {
+                    int money = map.get(name);
+                    money += redPacket;
+                    map.put(name, money);
+                }
+                if (redPackets.isEmpty()) {
+                    System.out.println("活动结束");
+                    break;
+                }
+            }
+            // 进程解锁后睡眠1秒
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println(name + "抢到了" + map.get(name) + "元");
+    }
+}
+```
 
